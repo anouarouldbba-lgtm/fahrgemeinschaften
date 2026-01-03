@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fahrgemeinschaften - Schienenersatzverkehr</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -23,10 +23,13 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // ===== Supabase Config (deine Werte) =====
+    // ===== Supabase Config =====
     const SUPABASE_URL = "https://gamonsleiapqtqtjnvlp.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhbW9uc2xlaWFwcXRxdGpudmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NTYyNjUsImV4cCI6MjA4MzAzMjI2NX0.Twxk0OcmTJ3v3K34bZHz9usLhNZyq-G15TXyMNk8xmw";
     const supabase = window._supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Cache-Buster / Debug
+    const APP_VERSION = "v-seatinput-2"; // wenn du das auf der Seite siehst, ist es die neue Version
 
     // Icons
     const Car = () => (
@@ -77,39 +80,36 @@
       const [loading, setLoading] = useState(true);
       const [showForm, setShowForm] = useState(false);
       const [showPassengerForm, setShowPassengerForm] = useState(null);
-      const [passengerName, setPassengerName] = useState('');
+      const [passengerName, setPassengerName] = useState("");
       const [formData, setFormData] = useState({
-        driver: '',
-        direction: 'hinfahrt',
-        route: '',
-        date: '',
-        time: '',
+        driver: "",
+        direction: "hinfahrt",
+        route: "",
+        date: "",
+        time: "",
         seats: 1,
-        notes: ''
+        notes: ""
       });
 
       const routes = {
         hinfahrt: [
-          { value: 'tiefstack-haw', label: 'Tiefstack → HAW Bergedorf' },
-          { value: 'berlinertor-haw', label: 'Berliner Tor → HAW Bergedorf' }
+          { value: "tiefstack-haw", label: "Tiefstack → HAW Bergedorf" },
+          { value: "berlinertor-haw", label: "Berliner Tor → HAW Bergedorf" }
         ],
         rueckfahrt: [
-          { value: 'haw-tiefstack', label: 'HAW Bergedorf → Tiefstack' },
-          { value: 'haw-berlinertor', label: 'HAW Bergedorf → Berliner Tor' }
+          { value: "haw-tiefstack", label: "HAW Bergedorf → Tiefstack" },
+          { value: "haw-berlinertor", label: "HAW Bergedorf → Berliner Tor" }
         ]
       };
 
       const getRouteLabel = (routeValue) => {
         const allRoutes = [...routes.hinfahrt, ...routes.rueckfahrt];
-        const route = allRoutes.find(r => r.value === routeValue);
+        const route = allRoutes.find((r) => r.value === routeValue);
         return route ? route.label : routeValue;
       };
 
-      // ===== Supabase Load/Save (shared) =====
       useEffect(() => {
         loadRides();
-
-        // Polling alle 5 Sekunden (einfach + robust auf GitHub Pages)
         const interval = setInterval(loadRides, 5000);
         return () => clearInterval(interval);
       }, []);
@@ -126,11 +126,8 @@
 
           const loaded = Array.isArray(data?.rides) ? data.rides : [];
           setRides(loaded);
-
-          // local backup
           localStorage.setItem("carpool-rides", JSON.stringify(loaded));
         } catch (error) {
-          console.log("Supabase laden fehlgeschlagen, nutze localStorage", error);
           const localData = localStorage.getItem("carpool-rides");
           if (localData) setRides(JSON.parse(localData));
         } finally {
@@ -141,7 +138,6 @@
       const saveRides = async (newRides) => {
         setRides(newRides);
         localStorage.setItem("carpool-rides", JSON.stringify(newRides));
-
         try {
           const { error } = await supabase
             .from("carpool_state")
@@ -150,8 +146,7 @@
 
           if (error) throw error;
         } catch (error) {
-          console.error("Supabase speichern fehlgeschlagen (nur lokal gespeichert):", error);
-          alert("Speichern in der Cloud fehlgeschlagen. (Offline?) Es wurde lokal gespeichert.");
+          alert("Speichern in der Cloud fehlgeschlagen. Es wurde lokal gespeichert.");
         }
       };
 
@@ -159,11 +154,12 @@
         if (formData.driver && formData.route && formData.date && formData.time) {
           const newRide = {
             ...formData,
+            seats: Number(formData.seats || 1), // <-- wichtig: immer Zahl speichern
             id: Date.now(),
             passengers: []
           };
           saveRides([...rides, newRide]);
-          setFormData({ driver: '', direction: 'hinfahrt', route: '', date: '', time: '', seats: 1, notes: '' });
+          setFormData({ driver: "", direction: "hinfahrt", route: "", date: "", time: "", seats: 1, notes: "" });
           setShowForm(false);
         } else {
           alert("Bitte Name, Strecke, Datum und Uhrzeit ausfüllen.");
@@ -171,24 +167,21 @@
       };
 
       const handleDelete = (id) => {
-        if (confirm('Fahrt wirklich löschen?')) {
-          saveRides(rides.filter(ride => ride.id !== id));
+        if (confirm("Fahrt wirklich löschen?")) {
+          saveRides(rides.filter((ride) => ride.id !== id));
         }
       };
 
       const handleAddPassenger = (rideId) => {
         if (!passengerName.trim()) return;
 
-        const updatedRides = rides.map(ride => {
+        const updatedRides = rides.map((ride) => {
           if (ride.id === rideId) {
             const availableSeats = ride.seats - (ride.passengers?.length || 0);
             if (availableSeats > 0) {
-              return {
-                ...ride,
-                passengers: [...(ride.passengers || []), passengerName.trim()]
-              };
+              return { ...ride, passengers: [...(ride.passengers || []), passengerName.trim()] };
             } else {
-              alert('Keine freien Plätze mehr verfügbar!');
+              alert("Keine freien Plätze mehr verfügbar!");
               return ride;
             }
           }
@@ -196,18 +189,15 @@
         });
 
         saveRides(updatedRides);
-        setPassengerName('');
+        setPassengerName("");
         setShowPassengerForm(null);
       };
 
       const handleRemovePassenger = (rideId, passengerIndex) => {
-        if (confirm('Mitfahrer wirklich entfernen?')) {
-          const updatedRides = rides.map(ride => {
+        if (confirm("Mitfahrer wirklich entfernen?")) {
+          const updatedRides = rides.map((ride) => {
             if (ride.id === rideId) {
-              return {
-                ...ride,
-                passengers: ride.passengers.filter((_, idx) => idx !== passengerIndex)
-              };
+              return { ...ride, passengers: ride.passengers.filter((_, idx) => idx !== passengerIndex) };
             }
             return ride;
           });
@@ -232,6 +222,7 @@
                 <h1 className="text-3xl font-bold text-gray-800">Fahrgemeinschaften</h1>
               </div>
               <p className="text-gray-600 ml-13">Schienenersatzverkehr - Gemeinsam ans Ziel</p>
+              <p className="text-xs text-gray-400 mt-2">Version: {APP_VERSION}</p>
             </header>
 
             <div className="mb-6">
@@ -252,6 +243,7 @@
                     <X />
                   </button>
                 </div>
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Dein Name</label>
@@ -262,17 +254,19 @@
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Richtung</label>
                     <select
                       value={formData.direction}
-                      onChange={(e) => setFormData({ ...formData, direction: e.target.value, route: '' })}
+                      onChange={(e) => setFormData({ ...formData, direction: e.target.value, route: "" })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="hinfahrt">Hinfahrt (zur HAW)</option>
                       <option value="rueckfahrt">Rückfahrt (von der HAW)</option>
                     </select>
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Strecke</label>
                     <select
@@ -281,11 +275,14 @@
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="">Bitte wählen...</option>
-                      {routes[formData.direction].map(route => (
-                        <option key={route.value} value={route.value}>{route.label}</option>
+                      {routes[formData.direction].map((route) => (
+                        <option key={route.value} value={route.value}>
+                          {route.label}
+                        </option>
                       ))}
                     </select>
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
@@ -306,31 +303,35 @@
                       />
                     </div>
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Freie Plätze</label>
-<input
-  type="text"
-  inputMode="numeric"
-  pattern="[0-9]*"
-  placeholder="1–8"
-  value={String(formData.seats)}
-  onChange={(e) => {
-    const raw = e.target.value.replace(/\D/g, "");
-    if (raw === "") {
-      setFormData({ ...formData, seats: "" });
-      return;
-    }
-    let n = Math.max(1, Math.min(8, Number(raw)));
-    setFormData({ ...formData, seats: n });
-  }}
-  onBlur={() => {
-    if (formData.seats === "" || formData.seats == null) {
-      setFormData({ ...formData, seats: 1 });
-    }
-  }}
-  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-/>
+
+                    {/* WICHTIG: type="tel" -> tippen geht auf allen Geräten zuverlässig */}
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="1–8"
+                      value={String(formData.seats)}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        if (raw === "") {
+                          setFormData({ ...formData, seats: "" });
+                          return;
+                        }
+                        let n = Math.max(1, Math.min(8, Number(raw)));
+                        setFormData({ ...formData, seats: n });
+                      }}
+                      onBlur={() => {
+                        if (formData.seats === "" || formData.seats == null) {
+                          setFormData({ ...formData, seats: 1 });
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Notizen (optional)</label>
                     <textarea
@@ -340,6 +341,7 @@
                       rows="2"
                     />
                   </div>
+
                   <button
                     onClick={handleSubmit}
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition"
@@ -352,12 +354,13 @@
 
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Verfügbare Fahrten</h2>
+
               {rides.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
                   Noch keine Fahrten verfügbar. Sei der Erste!
                 </div>
               ) : (
-                rides.map(ride => {
+                rides.map((ride) => {
                   const availableSeats = ride.seats - (ride.passengers?.length || 0);
                   return (
                     <div key={ride.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
@@ -383,12 +386,12 @@
                         </div>
                         <div className="flex items-center gap-2 text-gray-700">
                           <Clock />
-                          <span>{new Date(ride.date).toLocaleDateString('de-DE')} um {ride.time} Uhr</span>
+                          <span>{new Date(ride.date).toLocaleDateString("de-DE")} um {ride.time} Uhr</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-700">
                           <Users />
-                          <span className={availableSeats > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
-                            {availableSeats} von {ride.seats} {availableSeats === 1 ? 'Platz' : 'Plätze'} frei
+                          <span className={availableSeats > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                            {availableSeats} von {ride.seats} {availableSeats === 1 ? "Platz" : "Plätze"} frei
                           </span>
                         </div>
 
@@ -438,7 +441,7 @@
                                 <button
                                   onClick={() => {
                                     setShowPassengerForm(null);
-                                    setPassengerName('');
+                                    setPassengerName("");
                                   }}
                                   className="text-gray-500 hover:text-gray-700 px-2"
                                   title="Abbrechen"
@@ -469,13 +472,9 @@
       );
     }
 
-    // React 18 kompatibel mount
-    const rootEl = document.getElementById('root');
-    if (ReactDOM.createRoot) {
-      ReactDOM.createRoot(rootEl).render(<CarpoolApp />);
-    } else {
-      ReactDOM.render(<CarpoolApp />, rootEl);
-    }
+    const rootEl = document.getElementById("root");
+    if (ReactDOM.createRoot) ReactDOM.createRoot(rootEl).render(<CarpoolApp />);
+    else ReactDOM.render(<CarpoolApp />, rootEl);
   </script>
 </body>
 </html>
