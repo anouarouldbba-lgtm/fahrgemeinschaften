@@ -28,9 +28,6 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhbW9uc2xlaWFwcXRxdGpudmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NTYyNjUsImV4cCI6MjA4MzAzMjI2NX0.Twxk0OcmTJ3v3K34bZHz9usLhNZyq-G15TXyMNk8xmw";
     const supabase = window._supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Cache-Buster / Debug
-    const APP_VERSION = "v-seatinput-2"; // wenn du das auf der Seite siehst, ist es die neue Version
-
     // Icons
     const Car = () => (
       <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,7 +219,7 @@
                 <h1 className="text-3xl font-bold text-gray-800">Fahrgemeinschaften</h1>
               </div>
               <p className="text-gray-600 ml-13">Schienenersatzverkehr - Gemeinsam ans Ziel</p>
-              <p className="text-xs text-gray-400 mt-2">Version: {APP_VERSION}</p>
+              
             </header>
 
             <div className="mb-6">
