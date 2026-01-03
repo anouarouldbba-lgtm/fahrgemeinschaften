@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fahrgemeinschaften - Schienenersatzverkehr</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Icons als SVG-Komponenten
+        const Car = () => (
+            <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+            </svg>
+        );
+
+        const Plus = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+        );
+
+        const MapPin = () => (
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const Clock = () => (
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const Users = () => (
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        const X = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+        function CarpoolApp() {
+            const [rides, setRides] = useState([
+                {
+                    id: 1,
+                    driver: 'Anna M.',
+                    from: 'Hamburg Hbf',
+                    to: 'Lüneburg',
+                    date: '2026-01-08',
+                    time: '08:00',
+                    seats: 3,
+                    notes: 'Bin flexibel mit der Abfahrtszeit'
+                }
+            ]);
+            
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({
+                driver: '',
+                from: '',
+                to: '',
+                date: '',
+                time: '',
+                seats: 1,
+                notes: ''
+            });
+
+            const handleSubmit = () => {
+                if (formData.driver && formData.from && formData.to && formData.date && formData.time) {
+                    setRides([...rides, { ...formData, id: Date.now() }]);
+                    setFormData({ driver: '', from: '', to: '', date: '', time: '', seats: 1, notes: '' });
+                    setShowForm(false);
+                }
+            };
+
+            const handleDelete = (id) => {
+                setRides(rides.filter(ride => ride.id !== id));
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <div className="max-w-4xl mx-auto p-6">
+                        <header className="bg-white rounded-lg shadow-lg p-8 mb-8">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Car />
+                                <h1 className="text-3xl font-bold text-gray-800">Fahrgemeinschaften</h1>
+                            </div>
+                            <p className="text-gray-600 ml-13">Schienenersatzverkehr - Gemeinsam ans Ziel</p>
+                        </header>
+
+                        <div className="mb-6">
+                            <button
+                                onClick={() => setShowForm(!showForm)}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg flex items-center justify-center gap-2 transition"
+                            >
+                                <Plus />
+                                Neue Fahrt anbieten
+                            </button>
+                        </div>
+
+                        {showForm && (
+                            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-bold text-gray-800">Fahrt eintragen</h2>
+                                    <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                                        <X />
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Dein Name</label>
+                                        <input
+                                            type="text"
+                                            value={formData.driver}
+                                            onChange={(e) => setFormData({...formData, driver: e.target.value})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Von</label>
+                                            <input
+                                                type="text"
+                                                value={formData.from}
+                                                onChange={(e) => setFormData({...formData, from: e.target.value})}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nach</label>
+                                            <input
+                                                type="text"
+                                                value={formData.to}
+                                                onChange={(e) => setFormData({...formData, to: e.target.value})}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                                            <input
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Uhrzeit</label>
+                                            <input
+                                                type="time"
+                                                value={formData.time}
+                                                onChange={(e) => setFormData({...formData, time: e.target.value})}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Freie Plätze</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="8"
+                                            value={formData.seats}
+                                            onChange={(e) => setFormData({...formData, seats: parseInt(e.target.value)})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Notizen (optional)</label>
+                                        <textarea
+                                            value={formData.notes}
+                                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            rows="2"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSubmit}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition"
+                                    >
+                                        Fahrt veröffentlichen
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Verfügbare Fahrten</h2>
+                            {rides.length === 0 ? (
+                                <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                                    Noch keine Fahrten verfügbar. Sei der Erste!
+                                </div>
+                            ) : (
+                                rides.map(ride => (
+                                    <div key={ride.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">{ride.driver}</h3>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDelete(ride.id)}
+                                                className="text-red-500 hover:text-red-700 transition"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-gray-700">
+                                                <MapPin />
+                                                <span className="font-medium">{ride.from}</span>
+                                                <span className="text-gray-400">→</span>
+                                                <span className="font-medium">{ride.to}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-gray-700">
+                                                <Clock />
+                                                <span>{new Date(ride.date).toLocaleDateString('de-DE')} um {ride.time} Uhr</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-gray-700">
+                                                <Users />
+                                                <span>{ride.seats} {ride.seats === 1 ? 'Platz' : 'Plätze'} frei</span>
+                                            </div>
+                                            {ride.notes && (
+                                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                                    <p className="text-sm text-gray-600 italic">{ride.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CarpoolApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
