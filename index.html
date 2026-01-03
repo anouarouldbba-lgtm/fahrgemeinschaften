@@ -1,257 +1,467 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fahrgemeinschaften - Schienenersatzverkehr</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fahrgemeinschaften - Schienenersatzverkehr</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Supabase Client (ESM) -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    window._supabase = { createClient };
+  </script>
 </head>
+
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState } = React;
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-        // Icons als SVG-Komponenten
-        const Car = () => (
-            <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-            </svg>
+    // ===== Supabase Config (deine Werte) =====
+    const SUPABASE_URL = "https://gamonsleiapqtqtjnvlp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhbW9uc2xlaWFwcXRxdGpudmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NTYyNjUsImV4cCI6MjA4MzAzMjI2NX0.Twxk0OcmTJ3v3K34bZHz9usLhNZyq-G15TXyMNk8xmw";
+    const supabase = window._supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Icons
+    const Car = () => (
+      <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+      </svg>
+    );
+
+    const Plus = () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+    );
+
+    const MapPin = () => (
+      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+
+    const Clock = () => (
+      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+
+    const Users = () => (
+      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    );
+
+    const UserPlus = () => (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+      </svg>
+    );
+
+    const X = () => (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    );
+
+    function CarpoolApp() {
+      const [rides, setRides] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [showForm, setShowForm] = useState(false);
+      const [showPassengerForm, setShowPassengerForm] = useState(null);
+      const [passengerName, setPassengerName] = useState('');
+      const [formData, setFormData] = useState({
+        driver: '',
+        direction: 'hinfahrt',
+        route: '',
+        date: '',
+        time: '',
+        seats: 1,
+        notes: ''
+      });
+
+      const routes = {
+        hinfahrt: [
+          { value: 'tiefstack-haw', label: 'Tiefstack → HAW Bergedorf' },
+          { value: 'berlinertor-haw', label: 'Berliner Tor → HAW Bergedorf' }
+        ],
+        rueckfahrt: [
+          { value: 'haw-tiefstack', label: 'HAW Bergedorf → Tiefstack' },
+          { value: 'haw-berlinertor', label: 'HAW Bergedorf → Berliner Tor' }
+        ]
+      };
+
+      const getRouteLabel = (routeValue) => {
+        const allRoutes = [...routes.hinfahrt, ...routes.rueckfahrt];
+        const route = allRoutes.find(r => r.value === routeValue);
+        return route ? route.label : routeValue;
+      };
+
+      // ===== Supabase Load/Save (shared) =====
+      useEffect(() => {
+        loadRides();
+
+        // Polling alle 5 Sekunden (einfach + robust auf GitHub Pages)
+        const interval = setInterval(loadRides, 5000);
+        return () => clearInterval(interval);
+      }, []);
+
+      const loadRides = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("carpool_state")
+            .select("rides")
+            .eq("id", 1)
+            .single();
+
+          if (error) throw error;
+
+          const loaded = Array.isArray(data?.rides) ? data.rides : [];
+          setRides(loaded);
+
+          // local backup
+          localStorage.setItem("carpool-rides", JSON.stringify(loaded));
+        } catch (error) {
+          console.log("Supabase laden fehlgeschlagen, nutze localStorage", error);
+          const localData = localStorage.getItem("carpool-rides");
+          if (localData) setRides(JSON.parse(localData));
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const saveRides = async (newRides) => {
+        setRides(newRides);
+        localStorage.setItem("carpool-rides", JSON.stringify(newRides));
+
+        try {
+          const { error } = await supabase
+            .from("carpool_state")
+            .update({ rides: newRides, updated_at: new Date().toISOString() })
+            .eq("id", 1);
+
+          if (error) throw error;
+        } catch (error) {
+          console.error("Supabase speichern fehlgeschlagen (nur lokal gespeichert):", error);
+          alert("Speichern in der Cloud fehlgeschlagen. (Offline?) Es wurde lokal gespeichert.");
+        }
+      };
+
+      const handleSubmit = () => {
+        if (formData.driver && formData.route && formData.date && formData.time) {
+          const newRide = {
+            ...formData,
+            id: Date.now(),
+            passengers: []
+          };
+          saveRides([...rides, newRide]);
+          setFormData({ driver: '', direction: 'hinfahrt', route: '', date: '', time: '', seats: 1, notes: '' });
+          setShowForm(false);
+        } else {
+          alert("Bitte Name, Strecke, Datum und Uhrzeit ausfüllen.");
+        }
+      };
+
+      const handleDelete = (id) => {
+        if (confirm('Fahrt wirklich löschen?')) {
+          saveRides(rides.filter(ride => ride.id !== id));
+        }
+      };
+
+      const handleAddPassenger = (rideId) => {
+        if (!passengerName.trim()) return;
+
+        const updatedRides = rides.map(ride => {
+          if (ride.id === rideId) {
+            const availableSeats = ride.seats - (ride.passengers?.length || 0);
+            if (availableSeats > 0) {
+              return {
+                ...ride,
+                passengers: [...(ride.passengers || []), passengerName.trim()]
+              };
+            } else {
+              alert('Keine freien Plätze mehr verfügbar!');
+              return ride;
+            }
+          }
+          return ride;
+        });
+
+        saveRides(updatedRides);
+        setPassengerName('');
+        setShowPassengerForm(null);
+      };
+
+      const handleRemovePassenger = (rideId, passengerIndex) => {
+        if (confirm('Mitfahrer wirklich entfernen?')) {
+          const updatedRides = rides.map(ride => {
+            if (ride.id === rideId) {
+              return {
+                ...ride,
+                passengers: ride.passengers.filter((_, idx) => idx !== passengerIndex)
+              };
+            }
+            return ride;
+          });
+          saveRides(updatedRides);
+        }
+      };
+
+      if (loading) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+            <div className="text-xl text-gray-600">Lade Fahrten...</div>
+          </div>
         );
+      }
 
-        const Plus = () => (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-        );
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="max-w-4xl mx-auto p-6">
+            <header className="bg-white rounded-lg shadow-lg p-8 mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <Car />
+                <h1 className="text-3xl font-bold text-gray-800">Fahrgemeinschaften</h1>
+              </div>
+              <p className="text-gray-600 ml-13">Schienenersatzverkehr - Gemeinsam ans Ziel</p>
+            </header>
 
-        const MapPin = () => (
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        );
+            <div className="mb-6">
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg flex items-center justify-center gap-2 transition"
+              >
+                <Plus />
+                Neue Fahrt anbieten
+              </button>
+            </div>
 
-        const Clock = () => (
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        );
+            {showForm && (
+              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">Fahrt eintragen</h2>
+                  <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+                    <X />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dein Name</label>
+                    <input
+                      type="text"
+                      value={formData.driver}
+                      onChange={(e) => setFormData({ ...formData, driver: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Richtung</label>
+                    <select
+                      value={formData.direction}
+                      onChange={(e) => setFormData({ ...formData, direction: e.target.value, route: '' })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    >
+                      <option value="hinfahrt">Hinfahrt (zur HAW)</option>
+                      <option value="rueckfahrt">Rückfahrt (von der HAW)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Strecke</label>
+                    <select
+                      value={formData.route}
+                      onChange={(e) => setFormData({ ...formData, route: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    >
+                      <option value="">Bitte wählen...</option>
+                      {routes[formData.direction].map(route => (
+                        <option key={route.value} value={route.value}>{route.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                      <input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Uhrzeit</label>
+                      <input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Freie Plätze</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="8"
+                      value={formData.seats}
+                      onChange={(e) => setFormData({ ...formData, seats: parseInt(e.target.value || "1", 10) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Notizen (optional)</label>
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      rows="2"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSubmit}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition"
+                  >
+                    Fahrt veröffentlichen
+                  </button>
+                </div>
+              </div>
+            )}
 
-        const Users = () => (
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-        );
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Verfügbare Fahrten</h2>
+              {rides.length === 0 ? (
+                <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                  Noch keine Fahrten verfügbar. Sei der Erste!
+                </div>
+              ) : (
+                rides.map(ride => {
+                  const availableSeats = ride.seats - (ride.passengers?.length || 0);
+                  return (
+                    <div key={ride.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-800">{ride.driver}</h3>
+                        </div>
+                        <button
+                          onClick={() => handleDelete(ride.id)}
+                          className="text-red-500 hover:text-red-700 transition"
+                          title="Fahrt löschen"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
 
-        const X = () => (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        );
-
-        function CarpoolApp() {
-            const [rides, setRides] = useState([
-                {
-                    id: 1,
-                    driver: 'Anna M.',
-                    from: 'Hamburg Hbf',
-                    to: 'Lüneburg',
-                    date: '2026-01-08',
-                    time: '08:00',
-                    seats: 3,
-                    notes: 'Bin flexibel mit der Abfahrtszeit'
-                }
-            ]);
-            
-            const [showForm, setShowForm] = useState(false);
-            const [formData, setFormData] = useState({
-                driver: '',
-                from: '',
-                to: '',
-                date: '',
-                time: '',
-                seats: 1,
-                notes: ''
-            });
-
-            const handleSubmit = () => {
-                if (formData.driver && formData.from && formData.to && formData.date && formData.time) {
-                    setRides([...rides, { ...formData, id: Date.now() }]);
-                    setFormData({ driver: '', from: '', to: '', date: '', time: '', seats: 1, notes: '' });
-                    setShowForm(false);
-                }
-            };
-
-            const handleDelete = (id) => {
-                setRides(rides.filter(ride => ride.id !== id));
-            };
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-                    <div className="max-w-4xl mx-auto p-6">
-                        <header className="bg-white rounded-lg shadow-lg p-8 mb-8">
-                            <div className="flex items-center gap-3 mb-2">
-                                <Car />
-                                <h1 className="text-3xl font-bold text-gray-800">Fahrgemeinschaften</h1>
-                            </div>
-                            <p className="text-gray-600 ml-13">Schienenersatzverkehr - Gemeinsam ans Ziel</p>
-                        </header>
-
-                        <div className="mb-6">
-                            <button
-                                onClick={() => setShowForm(!showForm)}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg flex items-center justify-center gap-2 transition"
-                            >
-                                <Plus />
-                                Neue Fahrt anbieten
-                            </button>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <MapPin />
+                          <span className="font-medium">{getRouteLabel(ride.route)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Clock />
+                          <span>{new Date(ride.date).toLocaleDateString('de-DE')} um {ride.time} Uhr</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Users />
+                          <span className={availableSeats > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                            {availableSeats} von {ride.seats} {availableSeats === 1 ? 'Platz' : 'Plätze'} frei
+                          </span>
                         </div>
 
-                        {showForm && (
-                            <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-xl font-bold text-gray-800">Fahrt eintragen</h2>
-                                    <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
-                                        <X />
-                                    </button>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Dein Name</label>
-                                        <input
-                                            type="text"
-                                            value={formData.driver}
-                                            onChange={(e) => setFormData({...formData, driver: e.target.value})}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Von</label>
-                                            <input
-                                                type="text"
-                                                value={formData.from}
-                                                onChange={(e) => setFormData({...formData, from: e.target.value})}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nach</label>
-                                            <input
-                                                type="text"
-                                                value={formData.to}
-                                                onChange={(e) => setFormData({...formData, to: e.target.value})}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
-                                            <input
-                                                type="date"
-                                                value={formData.date}
-                                                onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Uhrzeit</label>
-                                            <input
-                                                type="time"
-                                                value={formData.time}
-                                                onChange={(e) => setFormData({...formData, time: e.target.value})}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Freie Plätze</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="8"
-                                            value={formData.seats}
-                                            onChange={(e) => setFormData({...formData, seats: parseInt(e.target.value)})}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Notizen (optional)</label>
-                                        <textarea
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            rows="2"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition"
-                                    >
-                                        Fahrt veröffentlichen
-                                    </button>
-                                </div>
-                            </div>
+                        {ride.notes && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-600 italic">{ride.notes}</p>
+                          </div>
                         )}
 
-                        <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Verfügbare Fahrten</h2>
-                            {rides.length === 0 ? (
-                                <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                                    Noch keine Fahrten verfügbar. Sei der Erste!
+                        {ride.passengers && ride.passengers.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">Mitfahrer:</h4>
+                            <div className="space-y-1">
+                              {ride.passengers.map((passenger, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
+                                  <span className="text-sm text-gray-700">{passenger}</span>
+                                  <button
+                                    onClick={() => handleRemovePassenger(ride.id, idx)}
+                                    className="text-red-500 hover:text-red-700 text-xs"
+                                    title="Mitfahrer entfernen"
+                                  >
+                                    ✕
+                                  </button>
                                 </div>
-                            ) : (
-                                rides.map(ride => (
-                                    <div key={ride.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-800">{ride.driver}</h3>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDelete(ride.id)}
-                                                className="text-red-500 hover:text-red-700 transition"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2 text-gray-700">
-                                                <MapPin />
-                                                <span className="font-medium">{ride.from}</span>
-                                                <span className="text-gray-400">→</span>
-                                                <span className="font-medium">{ride.to}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-700">
-                                                <Clock />
-                                                <span>{new Date(ride.date).toLocaleDateString('de-DE')} um {ride.time} Uhr</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-700">
-                                                <Users />
-                                                <span>{ride.seats} {ride.seats === 1 ? 'Platz' : 'Plätze'} frei</span>
-                                            </div>
-                                            {ride.notes && (
-                                                <div className="mt-3 pt-3 border-t border-gray-200">
-                                                    <p className="text-sm text-gray-600 italic">{ride.notes}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-        ReactDOM.render(<CarpoolApp />, document.getElementById('root'));
-    </script>
+                        {availableSeats > 0 && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            {showPassengerForm === ride.id ? (
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={passengerName}
+                                  onChange={(e) => setPassengerName(e.target.value)}
+                                  placeholder="Dein Name"
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <button
+                                  onClick={() => handleAddPassenger(ride.id)}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition"
+                                >
+                                  Anmelden
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowPassengerForm(null);
+                                    setPassengerName('');
+                                  }}
+                                  className="text-gray-500 hover:text-gray-700 px-2"
+                                  title="Abbrechen"
+                                >
+                                  <X />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setShowPassengerForm(ride.id)}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition text-sm font-semibold"
+                              >
+                                <UserPlus />
+                                Als Mitfahrer anmelden
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    // React 18 kompatibel mount
+    const rootEl = document.getElementById('root');
+    if (ReactDOM.createRoot) {
+      ReactDOM.createRoot(rootEl).render(<CarpoolApp />);
+    } else {
+      ReactDOM.render(<CarpoolApp />, rootEl);
+    }
+  </script>
 </body>
 </html>
